@@ -101,7 +101,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
 
   // Reports on the secrets itself, so it runs before the check below.
-  if (route.kind === "check") return diagnose(env, route.car, car);
+  if (route.kind === "check") return diagnose(request, env, route.car, car);
 
   // Everything below reaches the car, so it needs the service token.
   const token = serviceToken(env);

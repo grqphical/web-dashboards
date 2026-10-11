@@ -9,7 +9,7 @@
 //   /<car>/control         WebSocket passthrough -> the car's dashboard_node, role=control
 //   /<car>/bridge          WebSocket passthrough -> the car's foxglove_bridge
 //   /<car>/camera/<path>   HTTP passthrough -> the car's camera node
-//   /<car>/check           JSON: which hop between the site and the car fails
+//   /<car>/check           which hop between the site and the car fails (page, or ?format=json)
 
 import { CAR_ID_PATTERN } from "./config";
 

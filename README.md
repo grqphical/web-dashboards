@@ -103,7 +103,8 @@ After that, merging to `main` deploys the site, and the car starts the tunnel an
 
 1. Open https://dashboard.sfuracerbot.ca and log in. The landing page lists each car (Car 1 and Car 2), with a status: green `Online · N watching`, red `Offline` (with the reason underneath), or grey `Idle · nobody watching` (the site only connects to a car while someone watches, so it cannot know yet).
 2. Pick **Simple** or **Advanced** for a car.
-3. In Simple, the row under `CONNECTED` tells you about the far side of the link: whether the relay has the car, how many are watching, and `CTL OPEN` while you hold a control link.
+3. **Diagnostics** on a card opens `/<car>/check`: it tests every hop from the site to that car and says what to fix (add `?format=json` for the raw report).
+4. In Simple, the row under `CONNECTED` tells you about the far side of the link: whether the relay has the car, how many are watching, and `CTL OPEN` while you hold a control link.
 
 **Changing things from Simple.** The first time you tune, stop a process, delete a map, reset SLAM or use the stopwatch, the page opens your own control link. Tuning still needs **arm changes** ticked first, exactly as before. The link closes, and tuning disarms, after 5 minutes without a change or as soon as you switch away from the tab.
 

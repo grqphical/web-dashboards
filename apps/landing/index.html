@@ -72,10 +72,10 @@
     :root[data-theme="light"] { color-scheme: light; }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--body); background: var(--paper); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--body); background: var(--paper); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
     a { color: inherit; text-decoration: none; }
     :focus-visible { outline: 2px solid var(--blue-hi); outline-offset: 3px; }
-    .wrap { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+    .wrap { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
 
     /* Navy bar with a checker edge. */
     header { position: relative; background: var(--navy); padding-bottom: 8px; }
@@ -99,15 +99,20 @@
       :root:not([data-theme="light"]) .theme-toggle .moon { display: block; }
     }
 
-    main { padding: 2.5rem 0 3rem; }
+    /* The cards take whatever height the window has. */
+    main.wrap { flex: 1; display: flex; flex-direction: column; padding: 2rem 1.5rem 1.75rem; }
     /* Reserved height: a failed poll must not push the cards down. */
     #error { min-height: 1.25rem; margin-bottom: 0.75rem; font-family: var(--mono); font-size: 0.75rem; color: var(--off); }
 
-    .garage { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 1.25rem; }
+    .garage { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); grid-auto-rows: minmax(300px, 1fr); gap: 1.5rem; }
 
     /* Painted-corner slot, as on the website's registers. */
     .car {
-      padding: 1.25rem 1.35rem 1.4rem;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1.6rem 1.6rem;
       background-image:
         linear-gradient(var(--corner), var(--corner)), linear-gradient(var(--corner), var(--corner)),
         linear-gradient(var(--corner), var(--corner)), linear-gradient(var(--corner), var(--corner)),
@@ -115,6 +120,14 @@
       background-repeat: no-repeat;
       background-size: 100% 2px, 2px 20px, 2px 20px, 20px 2px, 2px 20px, 20px 2px;
       background-position: 0 0, 0 0, 100% 0, 0 100%, 100% 100%, 100% 100%;
+    }
+    .car > * { position: relative; z-index: 1; }
+    /* The race number: the car's number, big and quiet, like on a body panel. */
+    .car > .num {
+      position: absolute; z-index: 0; right: 1.6rem; top: 50%; transform: translateY(-50%);
+      font-family: var(--display); font-weight: 800; line-height: 0.8;
+      font-size: clamp(9rem, 34vh, 20rem); color: var(--line);
+      user-select: none; pointer-events: none;
     }
     .car-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .plate {
@@ -130,25 +143,43 @@
     .state[data-state="off"] b { color: var(--off); }
     .state b { font-weight: 600; color: var(--idle); }
 
-    .car h2 { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 2.3rem; line-height: 1; color: var(--heading); margin: 0.85rem 0 0.35rem; }
+    .car h2 { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(2.3rem, 4vw, 3.2rem); line-height: 1; color: var(--heading); margin: 1rem 0 0.4rem; }
     /* One reserved line: an error appearing never moves the buttons. */
     .detail { height: 1.5em; font-size: 0.85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.9rem; }
 
-    .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: auto; }
+    /* Diagnostics: a quieter link at the end of the row; red while the car is offline. */
+    .actions .btn-diag {
+      margin-left: auto; padding: 0.35rem 0; font-family: var(--mono); font-size: 0.74rem; font-weight: 600;
+      letter-spacing: 0.1em; color: var(--muted); border: 0; border-bottom: 1px solid currentColor;
+    }
+    .actions .btn-diag:hover { color: var(--heading); }
+    .car[data-state="off"] .btn-diag { color: var(--off); }
     .btn { font-family: var(--display); font-weight: 700; font-size: 0.98rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.6rem 1.35rem; text-align: center; transition: background 0.15s, border-color 0.15s; }
     .btn-primary { background: var(--blue); color: #ffffff; clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%); }
     .btn-primary:hover { background: var(--blue-deep); }
-    .btn-ghost { border: 1px solid var(--line); color: var(--heading); }
+    .btn-ghost { border: 1px solid var(--line); color: var(--heading); background: var(--paper); }
     .btn-ghost:hover { border-color: var(--heading); }
 
-    .footnote { margin-top: 1.75rem; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--faint); }
-    .footnote a { color: var(--muted); border-bottom: 1px solid var(--line); }
+    .footnote { margin-top: 1.25rem; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--faint); }
+
+    /* Slim navy footer, checker on its top edge. */
+    footer { position: relative; background: var(--navy); color: var(--mist); padding: 1.1rem 0 1rem; margin-top: 8px; }
+    footer::before {
+      content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 8px;
+      background: repeating-conic-gradient(#ffffff 0 25%, var(--navy) 0 50%) 0 0/16px 16px;
+    }
+    footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1.5rem; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    footer nav { gap: 1.25rem; }
 
     @media (max-width: 600px) {
       .wrap { padding: 0 1rem; }
       .hide-narrow { display: none; }
-      main { padding-top: 1.75rem; }
+      main.wrap { padding: 1.5rem 1rem 1.25rem; }
+      .car > .num { display: none; }
+      .garage { grid-auto-rows: auto; }
       .actions { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+      .actions .btn-diag { grid-column: 1 / -1; justify-self: start; margin: 0.2rem 0 0; }
       .btn { padding: 0.6rem 0.4rem; }
     }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -175,9 +206,19 @@
     <div id="error" role="status"></div>
     <div id="cars" class="garage"><p>Loading cars&hellip;</p></div>
     <p class="footnote">
-      Advanced needs Chrome or Edge. Not connecting? Open /&lt;car&gt;/check, like <a href="/rb2/check">/rb2/check</a>.
+      Advanced needs Chrome or Edge. Diagnostics tests every hop from this site to the car and says what to fix.
     </p>
   </main>
+
+  <footer>
+    <div class="wrap">
+      <span>SFU Racerbot &middot; Simon Fraser University</span>
+      <nav aria-label="Elsewhere">
+        <a href="https://github.com/sfu-racerbot/web-dashboards#using-it">Help</a>
+        <a href="https://github.com/sfu-racerbot/web-dashboards">GitHub</a>
+      </nav>
+    </div>
+  </footer>
 
   <script>
     (() => {
@@ -230,6 +271,8 @@
 
       function card(car) {
         const root = el('article', 'car');
+        const num = el('span', 'num', car.id.replace(/\D/g, ''));
+        num.setAttribute('aria-hidden', 'true');
         const top = el('div', 'car-top');
         const state = el('span', 'state');
         const marker = el('i');
@@ -243,8 +286,9 @@
           button(car.links.simple, 'Simple', 'btn-primary'),
           button(advancedHref(car), 'Advanced', 'btn-ghost', 'Lichtblick. Chrome or Edge.'),
           button(car.links.camera, 'Camera', 'btn-ghost'),
+          button(`/${car.id}/check`, 'Diagnostics', 'btn-diag', 'Test every hop from this site to the car'),
         );
-        root.append(top, el('h2', '', car.name), detail, actions);
+        root.append(num, top, el('h2', '', car.name), detail, actions);
         return { root, state, word, count, detail };
       }
 
@@ -273,6 +317,7 @@
           }
           const view = describe(car.status);
           entry.state.dataset.state = view.state;
+          entry.root.dataset.state = view.state;
           entry.word.textContent = view.word;
           entry.count.textContent = view.count;
           entry.detail.textContent = view.detail;

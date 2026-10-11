@@ -168,8 +168,8 @@ ros2 run web_dashboard remote_check --site https://dashboard.sfuracerbot.ca --ca
 
 **Working when:** it ends with `Everything this car can check is fine`.
 
-Then in a browser, open **https://dashboard.sfuracerbot.ca/rb1/check**.
+Then in a browser, open **https://dashboard.sfuracerbot.ca/rb1/check** (or select **Diagnostics** on Car 1's card).
 
-**Working when:** every line says `"ok": true`, including `relay websocket (from the Durable Object)`. Then open the landing page, choose Car 1's **Simple**: the link row reads `CAR ONLINE · 1 WATCHING`, and the map, LiDAR and camera appear. **Advanced** (Chrome or Edge) shows Car 1's topics.
+**Working when:** every hop is marked **OK**, including `relay websocket (from the Durable Object)`. Then open the landing page, choose Car 1's **Simple**: the link row reads `CAR ONLINE · 1 WATCHING`, and the map, LiDAR and camera appear. **Advanced** (Chrome or Edge) shows Car 1's topics.
 
 If a line fails, its `fix` says what to change. [car/README.md, Troubleshooting](../car/README.md#troubleshooting) covers the rest.

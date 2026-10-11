@@ -1,5 +1,6 @@
 // /<car>/check: "why can't the site reach the car?", answered by the Worker
-// itself, from where it sits, with the real service token.
+// itself, from where it sits, with the real service token. Browsers get a
+// readable page (check-page.ts); ?format=json, curl and scripts get JSON.
 //
 // It tries each of the car's three origins the way the site does and
 // explains each answer in plain words. It is behind the same Access login
@@ -8,6 +9,7 @@
 // numbered error pages).
 
 import { CAR_WS_PATH, serviceToken, tokenShape, type CarConfig, type Env } from "./config";
+import { renderCheckPage, wantsHtml } from "./check-page";
 
 export type Hop = "dashboard websocket" | "relay websocket" | "bridge" | "camera";
 
@@ -156,7 +158,18 @@ export async function probe(
   return { name: hop, url, status: response.status, ...verdict };
 }
 
-export async function diagnose(env: Env, carId: string, car: CarConfig): Promise<Response> {
+export interface CheckReport {
+  car: string;
+  name: string;
+  summary: string;
+  ok: boolean;
+  checks: HopResult[];
+  worker_setting_names: string[];
+  relay: unknown;
+  checked_at: string;
+}
+
+export async function diagnose(request: Request, env: Env, carId: string, car: CarConfig): Promise<Response> {
   const token = serviceToken(env);
   const results: HopResult[] = [];
   // Names only -- never values -- of everything the running Worker was given,
@@ -216,14 +229,25 @@ export async function diagnose(env: Env, carId: string, car: CarConfig): Promise
     relay = { error: (err as Error).message };
   }
   const allOk = results.every((r) => r.ok);
-  return new Response(JSON.stringify({
+  const report: CheckReport = {
     car: carId,
+    name: car.name,
     summary: allOk
       ? "Every hop from the site to the car works. If the dashboard still shows the car offline, reload it."
       : `Not working: ${results.filter((r) => !r.ok).map((r) => r.name).join(", ")}. See each "fix".`,
+    ok: allOk,
     checks: results,
     worker_setting_names: names,
     relay,
     checked_at: new Date().toISOString(),
-  }, null, 2), { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
+  };
+  // A browser gets a readable page; scripts, curl and ?format=json get JSON.
+  if (wantsHtml(request)) {
+    return new Response(renderCheckPage(report), {
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+  return new Response(JSON.stringify(report, null, 2), {
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+  });
 }
