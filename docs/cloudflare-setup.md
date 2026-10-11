@@ -132,7 +132,7 @@ The site needs the service token from step 1 while it runs, to open the car's ho
 
 With the car on and its tunnel, `dashboard_node`, `foxglove_bridge` and camera running:
 
-1. Open https://dashboard.sfuracerbot.ca in a private window. **Working when:** Access asks for your email, then the landing page lists **Car 2**.
+1. Open https://dashboard.sfuracerbot.ca in a private window. **Working when:** Access asks for your email, then the landing page lists **Car 1** and **Car 2**.
 2. Open **Simple**. **Working when:** the link row under `CONNECTED` reads `CAR ONLINE · 1 WATCHING`, the map and scan draw, and the camera inset shows video.
 3. Open **Advanced** in Chrome or Edge. **Working when:** Lichtblick opens already connected to `wss://dashboard.sfuracerbot.ca/rb2/bridge` and the topic list fills in.
 4. In the Cloudflare dashboard, **Workers & Pages** > `web-dashboards` > **Observability** (logs). **Working when:** you see `upstream_connect` for `rb2` and a `bridge_connect` with your email.

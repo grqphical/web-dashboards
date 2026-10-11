@@ -1,178 +1,551 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-CA">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>Racerbot dashboards</title>
+  <meta name="color-scheme" content="light dark" />
+  <title>SFU Racerbot dashboards</title>
+  <link rel="icon" href="/img/icon-blue.png" type="image/png" />
   <!--
-    The landing page. Plain HTML and one inline script, no build step, in
-    the simple dashboard's HUD style (apps/simple/web/style.css) and under
-    its two rules: colour is state, never decoration; nothing on the page
-    resizes itself as data arrives.
+    The landing page. Plain HTML and one inline script, no build step.
 
-    Everything it shows comes from /api/cars, which lists the cars in the
-    Worker's config and asks each car's relay whether the car is connected
-    and how many people are watching.
+    It wears the team website's "Constructor" design system
+    (sfu-racerbot/racerbot-website, static/css/main.css): Saira Condensed
+    caps, IBM Plex Mono eyebrows, a navy band with a checker edge, sheared
+    buttons, race plates, the painted-corner grid slot and the 3:2:1 sector
+    rule. Light or dark follows the system, and the toggle pins a choice,
+    exactly as on the website. Keep it restrained the way the website is:
+    no glows, no stat tiles, no hover-lift cards.
+
+    Colour carries state only in the car status marker. Nothing on the
+    page changes size as data arrives: each card reserves its status and
+    detail rows.
+
+    Everything a card shows comes from /api/cars, which lists the cars in
+    the Worker's config (CARS in wrangler.jsonc, in order) and asks each
+    car's relay whether the car is connected and how many are watching.
   -->
+
+  <!-- Apply a saved theme before first paint, so the page never flashes. -->
+  <script>
+    try {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved);
+    } catch {}
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+
   <style>
     :root {
-      --void: #04070c;
-      --panel: rgba(6, 12, 21, 0.62);
-      --line: rgba(64, 200, 245, 0.16);
-      --line-strong: rgba(64, 200, 245, 0.40);
-      --accent: #3ddcff;
-      --go: #2bf58a;
-      --warn: #ffb636;
-      --bad: #ff4560;
-      --ink: #dcecf7;
-      --ink-dim: #7d97ac;
-      --ink-faint: #4d6377;
-      --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
-      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      color-scheme: light dark;
+
+      --paper: #ffffff;
+      --wash: #f3f5f9;
+      --navy: #0c1e3a;
+      --navy-line: rgba(154, 183, 220, 0.18);
+      --ink: #16233d;
+      --muted: #4c5a76;
+      --faint: #7a89a6;
+      --heading: var(--navy);
+      --snow: #f2f6fb;
+      --mist: #aebfd9;
+      --blue: #1d5f9e;
+      --blue-deep: #164a7c;
+      --blue-hi: #7fb2e5;
+      --link-ink: var(--blue);
+      --line: #dbe1ec;
+      --corner: var(--navy);
+      --checker: #ffffff;
+
+      /* Car state. Only the status marker and its word use these. */
+      --state-on: #157a3f;
+      --state-off: #b42318;
+      --state-idle: #7a89a6;
+
+      --font-display: 'Saira Condensed', 'Arial Narrow', sans-serif;
+      --font-body: 'Public Sans', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
     }
-    html, body {
-      margin: 0;
-      min-height: 100%;
-      background: var(--void);
+
+    /* "Constructor at night": the website's dark palette. */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --paper: #0b1626;
+        --wash: #101f36;
+        --navy: #16294c;
+        --navy-line: rgba(154, 183, 220, 0.16);
+        --ink: #dde5f2;
+        --muted: #9fb0cc;
+        --faint: #71829f;
+        --heading: #f3f7fc;
+        --blue: #3f7fc4;
+        --blue-deep: #2f6690;
+        --link-ink: var(--blue-hi);
+        --line: rgba(154, 183, 220, 0.18);
+        --corner: var(--blue-hi);
+        --state-on: #3ecf7a;
+        --state-off: #ff6b6b;
+        --state-idle: #71829f;
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --paper: #0b1626;
+      --wash: #101f36;
+      --navy: #16294c;
+      --navy-line: rgba(154, 183, 220, 0.16);
+      --ink: #dde5f2;
+      --muted: #9fb0cc;
+      --faint: #71829f;
+      --heading: #f3f7fc;
+      --blue: #3f7fc4;
+      --blue-deep: #2f6690;
+      --link-ink: var(--blue-hi);
+      --line: rgba(154, 183, 220, 0.18);
+      --corner: var(--blue-hi);
+      --state-on: #3ecf7a;
+      --state-off: #ff6b6b;
+      --state-idle: #71829f;
+    }
+    :root[data-theme="light"] { color-scheme: light; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background: var(--paper);
       color: var(--ink);
-      font-family: var(--sans);
-      font-variant-numeric: tabular-nums;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    main {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 32px 16px 48px;
-    }
-    header { margin-bottom: 24px; }
-    .brand {
-      font-family: var(--mono);
+    a { color: inherit; text-decoration: none; }
+    :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 1.5rem; }
+
+    h1, h2, h3 {
+      font-family: var(--font-display);
       font-weight: 700;
-      letter-spacing: 0.24em;
-      font-size: 18px;
-      color: var(--ink);
-    }
-    .brand-sub {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--ink-dim);
-      margin-top: 4px;
+      letter-spacing: 0.005em;
+      line-height: 0.98;
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--link-ink);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .eyebrow::before { content: ''; width: 26px; height: 2px; background: currentColor; flex-shrink: 0; }
+
+    /* ---- Top bar ---- */
+    .topbar { background: var(--navy); border-bottom: 1px solid var(--navy-line); }
+    .topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 1rem; }
+    .logo { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+    .logo img { width: 42px; height: 42px; flex: none; }
+    .logo-word {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+    .logo-word span { color: var(--blue-hi); }
+    .topnav { display: flex; align-items: center; gap: 1.75rem; }
+    .topnav a, .theme-toggle {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mist);
+      transition: color 0.2s;
+    }
+    .topnav a:hover, .theme-toggle:hover { color: #ffffff; }
+    .theme-toggle {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; background: none; border: 0; cursor: pointer;
+    }
+    .theme-toggle .icon-moon { display: none; }
+    :root[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+    :root[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: none; }
+      :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: block; }
+    }
+
+    /* ---- Navy band with a checker edge ---- */
+    .band {
+      position: relative;
+      background-color: var(--navy);
+      background-image:
+        linear-gradient(rgba(154, 183, 220, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(154, 183, 220, 0.06) 1px, transparent 1px);
+      background-size: 48px 48px;
+      color: var(--snow);
+      padding: 3.5rem 0 4.25rem;
+    }
+    .band::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 10px;
+      background: repeating-conic-gradient(var(--checker) 0 25%, transparent 0 50%) 0 0/20px 20px;
+    }
+    .band .eyebrow { color: var(--blue-hi); margin-bottom: 1rem; }
+    .band h1 { font-size: clamp(2.6rem, 7vw, 4.4rem); color: #ffffff; margin-bottom: 1rem; }
+    .band p { color: var(--mist); max-width: 56ch; font-size: 1.05rem; line-height: 1.7; }
+
+    main { flex: 1; padding: 3rem 0 4rem; }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .section-note { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--faint); }
+
+    /* Reserved height: a failed status poll must not push the cards down. */
+    #error {
+      min-height: 1.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--state-off);
+      margin-bottom: 0.5rem;
+    }
+
+    /* ---- The garage: one painted-corner grid slot per car ---- */
+    .garage {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+      gap: 1.5rem;
     }
     .car {
       position: relative;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      padding: 16px;
-      margin-bottom: 16px;
+      padding: 1.5rem 1.5rem 1.6rem;
+      background-color: var(--paper);
+      background-image:
+        linear-gradient(var(--corner), var(--corner)),
+        linear-gradient(var(--corner), var(--corner)),
+        linear-gradient(var(--corner), var(--corner)),
+        linear-gradient(var(--corner), var(--corner)),
+        linear-gradient(var(--corner), var(--corner)),
+        linear-gradient(var(--corner), var(--corner));
+      background-repeat: no-repeat;
+      background-size: 100% 2px, 2px 22px, 2px 22px, 22px 2px, 2px 22px, 2px 22px;
+      background-position: 0 0, 0 0, 100% 0, 0 100%, 100% 100%, 0 100%;
     }
-    /* The corner brackets every HUD panel wears. */
-    .car::before, .car::after {
-      content: "";
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-color: var(--line-strong);
-      border-style: solid;
-    }
-    .car::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
-    .car::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
-    .car-head {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .car-name { font-size: 20px; font-weight: 600; }
-    .car-id { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      height: 18px;
-      overflow: hidden;
-      white-space: nowrap;
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--ink-dim);
-      margin-bottom: 14px;
-    }
-    .status-text { overflow: hidden; text-overflow: ellipsis; }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex: none;
-      background: #2f4256;
-      transition: background-color 140ms linear, box-shadow 140ms linear;
-    }
-    .dot.on { background: var(--go); box-shadow: 0 0 8px rgba(43, 245, 138, 0.75); }
-    .dot.off { background: var(--bad); box-shadow: 0 0 8px rgba(255, 69, 96, 0.75); }
-    .links { display: flex; flex-wrap: wrap; gap: 10px; }
-    .links a {
+    .car-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+
+    /* Race plate: the car id, one sheared corner. */
+    .plate {
       display: inline-block;
-      padding: 9px 14px;
-      border: 1px solid var(--line-strong);
-      color: var(--accent);
-      text-decoration: none;
-      font-family: var(--mono);
-      font-size: 13px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      transition: background-color 140ms linear;
-    }
-    .links a:hover, .links a:focus-visible { background: rgba(61, 220, 255, 0.08); }
-    .links a small { color: var(--ink-faint); text-transform: none; letter-spacing: 0; }
-    .note {
-      font-size: 13px;
       line-height: 1.5;
-      color: var(--ink-dim);
-      border-left: 2px solid var(--line-strong);
-      padding-left: 10px;
-      margin: 24px 0 0;
+      color: var(--link-ink);
+      border: 1px solid currentColor;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%);
+      padding: 0.15rem 0.7rem 0.15rem 0.8rem;
     }
-    .note strong { color: var(--ink); font-weight: 600; }
-    #error {
-      min-height: 20px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--bad);
-      margin-bottom: 12px;
+
+    .state {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-width: 0;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
     }
-    #empty { color: var(--ink-dim); font-size: 14px; }
+    .state i { width: 9px; height: 9px; flex: none; background: var(--state-idle); }
+    .state b { font-weight: 600; color: var(--state-idle); }
+    .state[data-state="on"] i { background: var(--state-on); }
+    .state[data-state="on"] b { color: var(--state-on); }
+    .state[data-state="off"] i { background: var(--state-off); }
+    .state[data-state="off"] b { color: var(--state-off); }
+    .state-text { overflow: hidden; text-overflow: ellipsis; }
+
+    .car h2 { font-size: clamp(2.2rem, 5vw, 2.8rem); color: var(--heading); margin-top: 1.1rem; }
+
+    /* Sector rule: three sectors, 3:2:1, navy / blue / high blue. */
+    .sector { display: grid; grid-template-columns: 3fr 2fr 1fr; gap: 6px; height: 3px; margin: 0.9rem 0 0.9rem; }
+    .sector span:nth-child(1) { background: var(--navy); }
+    .sector span:nth-child(2) { background: var(--blue); }
+    .sector span:nth-child(3) { background: var(--blue-hi); }
+    :root[data-theme="dark"] .sector span:nth-child(1) { background: #2a4675; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .sector span:nth-child(1) { background: #2a4675; }
+    }
+
+    /* Two reserved lines, so an error appearing never moves the buttons. */
+    .car-detail {
+      min-height: 3em;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 1.1rem;
+    }
+
+    .car-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .btn {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1.2;
+      padding: 0.75rem 1.6rem;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 11px 100%);
+      transition: background 0.18s, color 0.18s, border-color 0.18s;
+    }
+    .btn-primary { background: var(--blue); color: #ffffff; }
+    .btn-primary:hover { background: var(--blue-deep); }
+    :root[data-theme="dark"] .btn-primary { background: var(--blue-deep); }
+    :root[data-theme="dark"] .btn-primary:hover { background: #27567a; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .btn-primary { background: var(--blue-deep); }
+      :root:not([data-theme="light"]) .btn-primary:hover { background: #27567a; }
+    }
+    /* Outlined buttons stay square: a shear would cut their border open. */
+    .btn-ghost {
+      clip-path: none;
+      border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+      color: var(--heading);
+    }
+    .btn-ghost:hover { border-color: currentColor; }
+    .btn small {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: none;
+      color: var(--faint);
+    }
+
+    #empty { color: var(--muted); }
+
+    /* ---- Which dashboard: a timing-tower list ---- */
+    .guide { margin-top: 3.5rem; }
+    .guide .eyebrow { margin-bottom: 1rem; }
+    .tower { list-style: none; border-top: 1px solid var(--line); }
+    .tower li {
+      display: grid;
+      grid-template-columns: 4px 150px minmax(0, 1fr) 130px;
+      align-items: center;
+      gap: 0 1.25rem;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .tower .bar { align-self: stretch; min-height: 28px; background: var(--navy); }
+    .tower li:nth-child(2) .bar { background: var(--blue); }
+    .tower li:nth-child(3) .bar { background: var(--blue-hi); }
+    :root[data-theme="dark"] .tower li:nth-child(1) .bar { background: #2a4675; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .tower li:nth-child(1) .bar { background: #2a4675; }
+    }
+    .tower .t {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--heading);
+      line-height: 1.2;
+    }
+    .tower .d { color: var(--muted); font-size: 0.92rem; line-height: 1.55; }
+    .tower .v {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: right;
+    }
+    .guide-more { margin-top: 1rem; font-size: 0.9rem; color: var(--muted); }
+    .guide-more a { color: var(--link-ink); border-bottom: 1px solid color-mix(in srgb, var(--blue) 35%, transparent); }
+
+    /* ---- Footer: navy bookend, checker on its top edge ---- */
+    footer { position: relative; background: var(--navy); color: var(--mist); padding: 2.5rem 0 2rem; }
+    footer::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; top: 0;
+      height: 10px;
+      background: repeating-conic-gradient(var(--checker) 0 25%, transparent 0 50%) 0 0/20px 20px;
+    }
+    footer .wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem 2rem; padding-top: 0.5rem; }
+    .foot-left { display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; }
+    .foot-left img { width: 32px; height: 32px; }
+    .foot-links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
+    .foot-links a {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mist);
+    }
+    .foot-links a:hover { color: #ffffff; }
+
+    @media (max-width: 760px) {
+      .wrap { padding: 0 1rem; }
+      .topnav { gap: 1rem; }
+      .topnav .hide-narrow { display: none; }
+      .band { padding: 2.5rem 0 3.25rem; }
+      .car { padding: 1.25rem 1.1rem 1.35rem; }
+      /* Simple full width, the other two side by side. */
+      .car-actions { display: grid; grid-template-columns: 1fr 1fr; }
+      .car-actions .btn { justify-content: center; }
+      .car-actions .btn-primary { grid-column: 1 / -1; }
+      .tower li { grid-template-columns: 4px minmax(0, 1fr); gap: 0.15rem 0.9rem; }
+      .tower .bar { grid-row: span 2; }
+      .tower .v { display: none; }
+    }
+    @media (max-width: 420px) {
+      .logo-word span { display: none; }
+      .btn { padding: 0.7rem 1rem; }
+      .btn small { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
   </style>
 </head>
 <body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="logo" href="/" aria-label="SFU Racerbot dashboards">
+        <img src="/img/icon.png" alt="" />
+        <span class="logo-word">SFU<span>&nbsp;Racerbot</span></span>
+      </a>
+      <nav class="topnav" aria-label="Site">
+        <a class="hide-narrow" href="https://sfuracerbot.ca/">Team site</a>
+        <a href="/cdn-cgi/access/logout">Sign out</a>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle colour theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"></circle>
+            <path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"></path>
+          </svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="eyebrow">Live from the cars</div>
+      <h1>Car dashboards</h1>
+      <p>
+        Watch what a car sees while it runs: its map, LiDAR, position, planned line and camera.
+        Tune it from trackside. Pick a car to start.
+      </p>
+    </div>
+  </section>
+
   <main>
-    <header>
-      <div class="brand">RACERBOT</div>
-      <div class="brand-sub">SFU Racerbot &middot; car dashboards</div>
-    </header>
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">The garage</span>
+        <span class="section-note">Status updates every 30&nbsp;s</span>
+      </div>
+      <div id="error" role="status"></div>
+      <div id="cars" class="garage"><p id="empty">Loading cars&hellip;</p></div>
 
-    <!-- Reserved height: a failed status poll must not push the cards down. -->
-    <div id="error" role="status"></div>
-    <div id="cars"><div id="empty">loading cars&hellip;</div></div>
-
-    <p class="note">
-      <strong>Simple</strong> is the team's own dashboard: map, LiDAR, pose, drive intent,
-      camera, live tuning. It works in any current browser, including on a phone.
-    </p>
-    <p class="note">
-      <strong>Advanced</strong> is <a href="https://github.com/lichtblick-suite/lichtblick" style="color: var(--accent)">Lichtblick</a>
-      connected straight to the car's ROS&nbsp;2 graph through foxglove_bridge: every topic,
-      service and parameter. <strong>It needs Chrome or Edge</strong>; other browsers are not
-      supported by Lichtblick.
-    </p>
+      <section class="guide" aria-labelledby="guide-title">
+        <h2 class="eyebrow" id="guide-title">Which dashboard</h2>
+        <ul class="tower">
+          <li>
+            <span class="bar"></span>
+            <span class="t">Simple</span>
+            <span class="d">The team's own dashboard: map, LiDAR, pose, drive intent, camera and live tuning. Start here.</span>
+            <span class="v">Any browser</span>
+          </li>
+          <li>
+            <span class="bar"></span>
+            <span class="t">Advanced</span>
+            <span class="d">Lichtblick on the car's whole ROS&nbsp;2 graph: every topic, plots, parameters and services.</span>
+            <span class="v">Chrome or Edge</span>
+          </li>
+          <li>
+            <span class="bar"></span>
+            <span class="t">Camera</span>
+            <span class="d">The car's camera on its own, full window.</span>
+            <span class="v">Any browser</span>
+          </li>
+        </ul>
+        <p class="guide-more">
+          A car only shows as online while someone is watching it: the site connects to a car when the first person opens it.
+          Something not working? Open <code>/&lt;car&gt;/check</code>, for example <a href="/rb2/check">/rb2/check</a>.
+        </p>
+      </section>
+    </div>
   </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot-left">
+        <img src="/img/icon.png" alt="" />
+        <span>SFU Racerbot &middot; Simon Fraser University</span>
+      </div>
+      <div class="foot-links">
+        <a href="https://sfuracerbot.ca/">sfuracerbot.ca</a>
+        <a href="https://github.com/sfu-racerbot/web-dashboards">GitHub</a>
+        <a href="/cdn-cgi/access/logout">Sign out</a>
+      </div>
+    </div>
+  </footer>
 
   <script>
     (() => {
       'use strict';
 
+      // ---- Theme toggle: system preference until clicked, as on the website.
+      const root = document.documentElement;
+      const toggle = document.getElementById('theme-toggle');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const effective = () => root.getAttribute('data-theme') || (prefersDark.matches ? 'dark' : 'light');
+      const label = () => toggle.setAttribute('aria-label', `Switch to ${effective() === 'dark' ? 'light' : 'dark'} mode`);
+      toggle.addEventListener('click', () => {
+        const next = effective() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch {}
+        label();
+      });
+      prefersDark.addEventListener('change', label);
+      label();
+
+      // ---- Cars
       const carsEl = document.getElementById('cars');
       const errorEl = document.getElementById('error');
       // Each poll is one Worker request plus one Durable Object request per
@@ -187,14 +560,10 @@
         return node;
       }
 
-      function link(href, label, hint) {
-        const a = el('a');
+      function button(href, label, className, hint) {
+        const a = el('a', `btn ${className}`, label);
         a.href = href;
-        a.textContent = label;
-        if (hint) {
-          a.append(' ');
-          a.append(el('small', '', hint));
-        }
+        if (hint) a.append(el('small', '', hint));
         return a;
       }
 
@@ -208,38 +577,55 @@
       }
 
       function card(car) {
-        const root = el('section', 'car');
-        const head = el('div', 'car-head');
-        head.append(el('span', 'car-name', car.name), el('span', 'car-id', car.id));
-        const status = el('div', 'status');
-        const dot = el('span', 'dot');
-        const text = el('span', 'status-text', 'checking…');
-        status.append(dot, text);
-        const links = el('div', 'links');
-        links.append(
-          link(car.links.simple, 'Simple'),
-          link(advancedHref(car), 'Advanced', 'Chrome / Edge'),
-          link(car.links.camera, 'Camera view'),
+        const root = el('article', 'car');
+        root.setAttribute('aria-label', car.name);
+        const top = el('div', 'car-top');
+        const state = el('span', 'state');
+        const marker = el('i');
+        marker.setAttribute('aria-hidden', 'true');
+        const word = el('b', '', 'Checking');
+        const text = el('span', 'state-text');
+        state.append(marker, word, text);
+        top.append(el('span', 'plate', car.id), state);
+
+        const sector = el('div', 'sector');
+        sector.setAttribute('aria-hidden', 'true');
+        sector.append(el('span'), el('span'), el('span'));
+
+        const detail = el('p', 'car-detail');
+        const actions = el('div', 'car-actions');
+        actions.append(
+          button(car.links.simple, 'Simple', 'btn-primary'),
+          button(advancedHref(car), 'Advanced', 'btn-ghost', 'Chrome / Edge'),
+          button(car.links.camera, 'Camera', 'btn-ghost'),
         );
-        root.append(head, status, links);
-        return { root, dot, text };
+        root.append(top, el('h2', '', car.name), sector, detail, actions);
+        return { root, state, word, text, detail };
       }
 
       function describe(status) {
-        if (!status) return { cls: '', text: 'status unknown' };
+        if (!status) return { state: 'idle', word: 'Unknown', text: '', detail: '' };
         const watching = `${status.viewers} watching`;
-        if (status.car_connected) return { cls: 'on', text: `car online · ${watching}` };
+        const error = status.error || '';
+        if (status.car_connected) {
+          return { state: 'on', word: 'Online', text: ` · ${watching}`, detail: 'Connected. Open a dashboard to join the others watching.' };
+        }
         // "Offline" here means the relay does not hold a car connection. With
         // nobody watching the relay deliberately holds none, so that is not
-        // evidence the car is down -- say so rather than show red.
-        if (status.viewers === 0) return { cls: '', text: 'idle · nobody watching' + (status.error ? ` · ${status.error}` : '') };
-        return { cls: 'off', text: `car offline · ${watching}` + (status.error ? ` · ${status.error}` : '') };
+        // evidence the car is down: say so rather than show red.
+        if (status.viewers === 0) {
+          return {
+            state: 'idle', word: 'Idle', text: ' · nobody watching',
+            detail: error ? `Last attempt: ${error}` : 'Not connected while nobody watches. Opening a dashboard connects it.',
+          };
+        }
+        return { state: 'off', word: 'Offline', text: ` · ${watching}`, detail: error || 'The site cannot reach this car right now.' };
       }
 
       function render(data) {
         if (!data.cars.length) {
           carsEl.textContent = '';
-          carsEl.append(el('div', '', 'No cars are configured.'));
+          carsEl.append(el('p', '', 'No cars are configured.'));
           return;
         }
         for (const car of data.cars) {
@@ -251,9 +637,11 @@
             carsEl.append(entry.root);
           }
           const view = describe(car.status);
-          entry.dot.className = `dot ${view.cls}`;
+          entry.state.dataset.state = view.state;
+          entry.word.textContent = view.word;
           entry.text.textContent = view.text;
-          entry.text.title = view.text;
+          entry.detail.textContent = view.detail;
+          entry.detail.title = view.detail;
         }
       }
 
@@ -265,7 +653,7 @@
           render(await response.json());
           errorEl.textContent = '';
         } catch (err) {
-          errorEl.textContent = `could not load car status -- ${err.message}`;
+          errorEl.textContent = `Could not load car status: ${err.message}`;
         }
       }
 

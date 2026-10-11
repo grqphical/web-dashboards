@@ -47,6 +47,12 @@
     // The one place cars are configured. Adding a car is adding an entry
     // here (and its tunnel + Access setup, docs/cloudflare-setup.md).
     "CARS": {
+      "rb1": {
+        "name": "Car 1",
+        "dash_origin": "https://rb1-dash-origin.sfuracerbot.ca",
+        "bridge_origin": "https://rb1-bridge-origin.sfuracerbot.ca",
+        "cam_origin": "https://rb1-cam-origin.sfuracerbot.ca"
+      },
       "rb2": {
         "name": "Car 2",
         "dash_origin": "https://rb2-dash-origin.sfuracerbot.ca",

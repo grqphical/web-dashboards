@@ -76,7 +76,7 @@ In words:
 
 | Folder | What it is | Read |
 |---|---|---|
-| [`apps/`](apps/) | The three web pages: [`landing/`](apps/landing/), [`simple/`](apps/simple/) (plain HTML/JS/CSS, no build step), and [`advanced/`](apps/advanced/) (the Lichtblick version we build, and the team's default layout) | [apps/simple/SOURCE.md](apps/simple/SOURCE.md), [apps/advanced/README.md](apps/advanced/README.md) |
+| [`apps/`](apps/) | The three web pages: [`landing/`](apps/landing/) (in the [team website](https://sfuracerbot.ca)'s style), [`simple/`](apps/simple/) (plain HTML/JS/CSS, no build step), and [`advanced/`](apps/advanced/) (the Lichtblick version we build, and the team's default layout) | [apps/simple/SOURCE.md](apps/simple/SOURCE.md), [apps/advanced/README.md](apps/advanced/README.md) |
 | [`worker/`](worker/) | The site itself and the per-car relay, in TypeScript, with tests | [docs/decisions.md](docs/decisions.md) |
 | [`car/`](car/) | **Everything to run on a car**: the ROS 2 packages `web_dashboard` (the dashboard's server, `remote_check`, and foxglove_bridge's settings) and `usb_cam_stream` (the camera) under [`car/ros/`](car/ros/), the bridge's boot service, the tunnel installer, a check script, and their docs | [car/README.md](car/README.md) |
 | [`tools/mock-car/`](tools/mock-car/) | A pretend car, for working on the site with no car | [tools/mock-car/README.md](tools/mock-car/README.md) |
@@ -97,11 +97,11 @@ After that, merging to `main` deploys the site, and the car starts the tunnel an
 
 **Building this for your own car?** The same three steps work with your own domain and your own ROS 2 Jazzy car: everything the car needs is in [`car/`](car/), and [car/README.md](car/README.md) is the complete guide. Then replace `sfuracerbot.ca` in `wrangler.jsonc` (the route, `PUBLIC_ORIGIN` and the `CARS` hostnames) with your domain.
 
-**Adding a car** is one entry in `CARS` in `wrangler.jsonc`, plus that car's tunnel and Access setup: [how](docs/cloudflare-setup.md#adding-a-car).
+**Adding a car** is one entry in `CARS` in `wrangler.jsonc`, plus that car's tunnel and Access setup: [how](docs/cloudflare-setup.md#adding-a-car). **Car 1** is already in `CARS`; its checklist is [docs/car-1-setup.md](docs/car-1-setup.md).
 
 ## Using it
 
-1. Open https://dashboard.sfuracerbot.ca and log in. The landing page lists each car, with a light: green `car online · N watching`, red `car offline`, or grey `idle · nobody watching` (the site only connects to a car while someone watches, so it cannot know yet).
+1. Open https://dashboard.sfuracerbot.ca and log in. The landing page lists each car (Car 1 and Car 2), with a status: green `Online · N watching`, red `Offline` (with the reason underneath), or grey `Idle · nobody watching` (the site only connects to a car while someone watches, so it cannot know yet).
 2. Pick **Simple** or **Advanced** for a car.
 3. In Simple, the row under `CONNECTED` tells you about the far side of the link: whether the relay has the car, how many are watching, and `CTL OPEN` while you hold a control link.
 
@@ -157,6 +157,7 @@ Advanced needs Lichtblick built once first (`apps/advanced/build.sh`, a few minu
 | Doc | Read it when |
 |---|---|
 | [car/README.md](car/README.md) | Setting up a car: building the ROS packages, your car's YAML, the tunnel, the bridge at boot, checking every hop, running the tests |
+| [docs/car-1-setup.md](docs/car-1-setup.md) | Bringing Car 1 (`rb1`) online: the same steps with Car 1's names filled in |
 | [car/docs/web-dashboard.md](car/docs/web-dashboard.md) | Using the Simple dashboard, and how its car side works: every panel, tuning and the `live_tunable_spec` contract, the wire contract |
 | [car/docs/foxglove-bridge.md](car/docs/foxglove-bridge.md) | What the Advanced dashboard can and cannot do to a car, and why nothing can be published |
 | [car/docs/usb-camera-livestream.md](car/docs/usb-camera-livestream.md) | The camera stream |
